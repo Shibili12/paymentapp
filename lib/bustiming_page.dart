@@ -1,9 +1,8 @@
-import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:paymentapp/notification_page.dart';
 import 'package:paymentapp/theme%20components/Palette.dart';
-import 'package:timeline_tile/timeline_tile.dart';
+
 import 'package:timelines/timelines.dart';
 
 class Bustimingpage extends StatefulWidget {
