@@ -8,6 +8,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 //import 'package:flutter_stripe/flutter_stripe.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:paymentapp/bustiming_page.dart';
 import 'package:paymentapp/notification_page.dart';
 import 'package:paymentapp/payment_historypage.dart';
 import 'package:paymentapp/theme%20components/Palette.dart';
@@ -290,6 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       GestureDetector(
                         behavior: HitTestBehavior.translucent,
                         onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => Bustimingpage()));
                           //Config.dealerOrderEdit = false;
                           /* Navigator.push(context,
                       MaterialPageRoute(builder: (context) =>  NewOrder()));*/
@@ -562,7 +565,6 @@ class _HomeScreenState extends State<HomeScreen> {
         "amount": "${amount}00", //100 rs
         "currency": "inr",
         'payment_method_types[]': 'card',
-        'payment_method': 'pm_card_visa',
       };
       var response = await http.post(
         Uri.parse("https://api.stripe.com/v1/payment_intents"),
