@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 //import 'package:flutter_stripe/flutter_stripe.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:paymentapp/bustiming_page.dart';
 import 'package:paymentapp/notification_page.dart';
 import 'package:paymentapp/payment_historypage.dart';
@@ -34,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
   Size? size;
   Map<String, dynamic>? paymentIntent;
+  XFile? selectedImage;
+  bool isImageselected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -541,17 +545,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (paymentIntent != null) {
         print(paymentIntent.toString());
-        await Stripe.instance.initPaymentSheet(
-          paymentSheetParameters: SetupPaymentSheetParameters(
-            paymentIntentClientSecret: paymentIntent!['client_secret'],
-            style: ThemeMode.light,
-            merchantDisplayName: 'Shibili',
-            customerId: paymentIntent!['customer'],
-            customerEphemeralKeySecret: paymentIntent!['ephemeralKey'],
-            allowsDelayedPaymentMethods: true,
-          ),
-        );
-        displayPaymentsheet();
+
+        await Stripe.instance
+            .initPaymentSheet(
+              paymentSheetParameters: SetupPaymentSheetParameters(
+                paymentIntentClientSecret: paymentIntent!['client_secret'],
+                style: ThemeMode.light,
+                merchantDisplayName: 'Shibili',
+                customerId: paymentIntent!['customer'],
+                customerEphemeralKeySecret: paymentIntent!['ephemeralKey'],
+                allowsDelayedPaymentMethods: true,
+              ),
+            )
+            .then(
+              (value) => displayPaymentsheet(),
+            )
+            .onError((error, stackTrace) => print(error.toString()));
       }
     } catch (e) {
       print("Exepction======>" + e.toString());
@@ -564,6 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Map<String, dynamic> body = {
         "amount": "${amount}00", //100 rs
         "currency": "inr",
+
         'payment_method_types[]': 'card',
       };
       var response = await http.post(
@@ -578,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       return jsonDecode(response.body);
     } catch (e) {
-      print("Exepction======>" + e.toString());
+      print("Exepction======> sssss" + e.toString());
     }
   }
 
@@ -668,14 +678,42 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            title: Center(
-                child: Text(
-              ' Greetings',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.bold),
-            )),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    ' Greetings',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                isImageselected == true
+                    ? GestureDetector(
+                        onTap: () {
+                          showImage(selectedImage!.path);
+                        },
+                        child: CircleAvatar(
+                          backgroundImage: FileImage(File(selectedImage!.path)),
+                          backgroundColor: Colors.white,
+                        ),
+                      )
+                    : IconButton(
+                        onPressed: () async {
+                          selectedImage = await pickImage();
+                          if (selectedImage != null) {
+                            setState(() {
+                              isImageselected = true;
+                            });
+                          }
+                        },
+                        icon: Icon(
+                          Icons.image_search,
+                          color: Palette.ToDoDeepRed,
+                        ))
+              ],
+            ),
             content: Container(
               height: 150,
               width: 320,
@@ -694,8 +732,85 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.all(Palette.ToDoDeepRed),
+                          foregroundColor:
+                              MaterialStateProperty.all(Colors.white),
+                          padding: MaterialStateProperty.all(EdgeInsets.only(
+                              right: 5, left: 5, top: 1, bottom: 1)),
+                          textStyle: MaterialStateProperty.all(TextStyle(
+                            fontSize: 13,
+                          ))),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('Save',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14.0,
+                          )),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         });
+      },
+    );
+  }
+
+  Future<XFile?> pickImage() async {
+    final imagePicker = ImagePicker();
+    try {
+      final image = await imagePicker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        return image;
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  showImage(String path) {
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          insetPadding: EdgeInsets.all(0),
+          contentPadding: EdgeInsets.all(1),
+          titlePadding: EdgeInsets.fromLTRB(2, 2, 2, 0),
+          title: Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: Icon(
+                    Icons.close,
+                    color: Palette.ToDoRed,
+                  ))),
+          content: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: FileImage(File(path)), fit: BoxFit.cover),
+              ),
+            ),
+          ),
+        );
       },
     );
   }
