@@ -9,6 +9,11 @@ class Notificationpage extends StatefulWidget {
 }
 
 class _NotificationpageState extends State<Notificationpage> {
+  var icons = [
+    Icons.energy_savings_leaf,
+    Icons.car_crash,
+    Icons.check_circle_outline,
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +29,7 @@ class _NotificationpageState extends State<Notificationpage> {
             ),
             subtitle: Text("$index hour ago"),
             leading: Icon(
-              Icons.car_crash,
+              icons[index],
               color: Palette.ToDoDeepRed,
             ),
             trailing: Icon(Icons.more_vert),
